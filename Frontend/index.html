@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+        <title>Airports</title>
+
+        <style type="text/css">
+            td {
+                border: solid;
+                width: 33%;
+            }
+        </style>
+
+        <script type="text/javascript">
+
+            //var path = "http://federicos.pythonanywhere.com"
+            var path = "http://127.0.0.1:5000"
+
+            var data = {}
+            var maps = {}
+            var nextMap=0
+
+            var xhr = new XMLHttpRequest();
+            xhr.timeout=600000
+            xhr.ontimeout = function(){
+                alert("Connection timeout error")
+            }
+            xhr.onprogress = function(e){
+                console.log(e.loaded)
+            }
+            xhr.onloadstart = function(){
+                document.getElementById("loading_status").innerHTML="Loading..."
+            }
+
+        </script>
+
+        <script type="text/javascript">
+
+            function mpld3_load_lib(url, callback){
+                var s = document.createElement('script');
+                s.src = url;
+                s.async = true;
+                s.onreadystatechange = s.onload = callback;
+                s.onerror = function(){console.warn("failed to load library " + url);};
+                document.getElementsByTagName("head")[0].appendChild(s);
+            }
+
+            function load_map(id, figure_json){
+
+                //mpld3.draw_figure(id, figure_json);
+
+                if(typeof(mpld3) !== "undefined" && mpld3._mpld3IsLoaded){
+
+                   !function(mpld3){
+                       mpld3.draw_figure(id, figure_json);
+                   }(mpld3);
+
+                }else if(typeof define === "function" && define.amd){
+
+                   require.config({paths: {d3: "https://mpld3.github.io/js/d3.v3.min"}});
+                   require(["d3"], function(d3){
+                      window.d3 = d3;
+                      mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3.js", function(){
+                          mpld3.draw_figure(id, figure_json);
+                      });
+                    });
+
+                }else{
+
+                    mpld3_load_lib("https://mpld3.github.io/js/d3.v3.min.js", function(){
+                         mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3.js", function(){
+                                 mpld3.draw_figure(id, figure_json);
+                            })
+                         });
+
+                }
+            }
+
+            function onSelectUpdate(el){
+                el.parentNode.parentNode.getElementsByClassName('options_list')[0].setAttribute("list", el.value);
+            }
+
+            function updateMap(el){
+
+                console.log("Loading...")
+
+                el = el.parentNode
+
+                name = el.getElementsByClassName("options_list")[0].value
+                id = data["name_id"][name]
+                param = el.parentNode.id
+
+                if(id){
+
+                    dv = document.createElement("div")
+                    dv.id = id
+                    el.appendChild(dv)
+
+                    xhr.open("GET", path+"/?id="+id, true);
+                    xhr.onloadend = function(){
+                        load_map(id, JSON.parse(xhr.responseText));
+                        document.getElementById("loading_status").innerHTML=""
+                    }
+                    xhr.send(null)
+                    document.getElementById("loading_status").innerHTML="Waiting for server response"
+
+                }
+                else{
+                    alert("not a valid entry");
+                }
+            }
+
+            function newMap(id){
+
+                el = document.getElementById("empty_template").content.cloneNode(true)
+                el.id = id
+                return el
+            }
+
+            function addMap(){
+
+                add=document.getElementById("add_map")
+                add.parentNode.removeChild(add)
+
+                maps[nextMap]="n"+nextMap
+                table=document.getElementById("table")
+                table_rows=table.children
+
+                curr_row=table_rows[table_rows.length-1]
+
+                if(curr_row.children.length == 3){
+                    curr_row=document.createElement("tr")
+                    table.appendChild(curr_row)
+                }
+                curr_row.appendChild(newMap(maps[nextMap]))
+
+                if(curr_row.children.length == 3){
+                    curr_row=document.createElement("tr")
+                    table.appendChild(curr_row)
+                }
+                curr_row.appendChild(add)
+
+                if(table.style.width == "67%"){
+                    table.style.width = "100%"
+                }
+                if(table.style.width == "33%"){
+                    table.style.width = "67%"
+                }
+
+                nextMap = nextMap+1
+
+            }
+
+            function onBodyLoad(){
+
+                xhr.open("GET", path+"/?id=query&num=100", true);
+
+                xhr.onloadend = function(){
+
+                    data=JSON.parse(xhr.responseText);
+
+                    for (name in data["id_name"]){
+                        if(name[0] == 'p'){
+                            document.getElementById("airports_list").innerHTML+='<option value="'+data["id_name"][name]+'"></option>'
+                        }
+                        else{
+                            document.getElementById("airlines_list").innerHTML+='<option value="'+data["id_name"][name]+'"></option>'
+                        }
+                    }
+
+                    add=document.getElementById("add_map_template").content.cloneNode(true)
+                    add.id="add_map"
+
+                    curr_row=document.createElement("tr")
+                    table=document.getElementById("table")
+                    table.appendChild(curr_row)
+                    curr_row.appendChild(add)
+
+                    document.body.removeChild(document.getElementById("add_map_template"))
+                    document.getElementById("loading_status").innerHTML=""
+
+                }
+
+                xhr.send(null)
+                document.getElementById("loading_status").innerHTML="Waiting for server response"
+
+            }
+
+        </script>
+
+    </head>
+    <body onload="onBodyLoad()">
+
+    	<datalist id="airports_list"></datalist>
+    	<datalist id="airlines_list"></datalist>
+
+        <template id="empty_template">
+            <td>
+                <div class="map_td"> <!-- MAP -->
+                    <form>
+                        <select oninput="onSelectUpdate(this)">
+                            <option value="airports_list">Airport</option>
+                            <option value="airlines_list">Airline</option>
+                        </select>
+                    </form>
+                    <form>
+                        <input autocomplete="off" class="options_list" list="airports_list" name="choice">
+                    </form>
+                    <button onclick="updateMap(this)">Update</button>
+                    <h4 class="map_name"></h4>
+                </div>
+            </td>
+        </template>
+
+        <template id="add_map_template">
+            <td id="add_map"> <!-- id="add_map" -->
+                <div> <!-- ADD MAP -->
+                    <button onclick="addMap()">Add map</button>
+                </div>
+            </td>
+        </template>
+
+    	<table id="table" style="width:33%"></table>
+
+        <footer id="loading_status"></footer>
+
+    </body>
+<!--
+        <div id="p1"></div>
+        <script type="text/javascript" src="http://127.0.0.1:5000/?id=p1"></script>
+-->
+</html>
