@@ -8,12 +8,39 @@
             td {
                 border: solid;
                 width: 33%;
+                border-radius: 8px;
+                border: 4px outset blue;
+            }
+            .add_map_button {
+                height:100px;
+                width:100px;
+            }
+            .my_border {
+                border-radius: 8px;
+                border: 2px outset blue;
+                background-color: lightBlue;
             }
         </style>
+        <style type="text/css">
+            .imgJoinDiv {
+                position: relative;
+            }
+
+            .imgJoin1 {
+                position: relative;
+                z-index: 1;
+            }
+
+            .imgJoin2 {
+                position: relative;
+                z-index: 2;
+            }
+        </style>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
 
         <script type="text/javascript">
 
-            var path = "http://federicos.pythonanywhere.com"
+            var path = "https://federicos.pythonanywhere.com"
             //var path = "http://127.0.0.1:5000"
 
             var data = {}
@@ -36,46 +63,6 @@
 
         <script type="text/javascript">
 
-            function mpld3_load_lib(url, callback){
-                var s = document.createElement('script');
-                s.src = url;
-                s.async = true;
-                s.onreadystatechange = s.onload = callback;
-                s.onerror = function(){console.warn("failed to load library " + url);};
-                document.getElementsByTagName("head")[0].appendChild(s);
-            }
-
-            function load_map(id, figure_json){
-
-                //mpld3.draw_figure(id, figure_json);
-
-                if(typeof(mpld3) !== "undefined" && mpld3._mpld3IsLoaded){
-
-                   !function(mpld3){
-                       mpld3.draw_figure(id, figure_json);
-                   }(mpld3);
-
-                }else if(typeof define === "function" && define.amd){
-
-                   require.config({paths: {d3: "https://mpld3.github.io/js/d3.v3.min"}});
-                   require(["d3"], function(d3){
-                      window.d3 = d3;
-                      mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3.js", function(){
-                          mpld3.draw_figure(id, figure_json);
-                      });
-                    });
-
-                }else{
-
-                    mpld3_load_lib("https://mpld3.github.io/js/d3.v3.min.js", function(){
-                         mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3.js", function(){
-                                 mpld3.draw_figure(id, figure_json);
-                            })
-                         });
-
-                }
-            }
-
             function onSelectUpdate(el){
                 el.parentNode.parentNode.getElementsByClassName('options_list')[0].setAttribute("list", el.value);
             }
@@ -92,18 +79,14 @@
 
                 if(id){
 
-                    dv = document.createElement("div")
-                    dv.id = id
-                    el.appendChild(dv)
+                    var image = el.getElementsByTagName("img")[1]
+                    image.style.top = -(el.getElementsByTagName("img")[0].height+6)+"px"
 
-                    xhr.open("GET", path+"/?id="+id, true);
-                    xhr.onloadend = function(){
-                        load_map(id, JSON.parse(xhr.responseText));
-                        document.getElementById("loading_status").innerHTML=""
-                    }
-                    xhr.send(null)
-                    document.getElementById("loading_status").innerHTML="Waiting for server response"
+                    image.onload = function(){
+                        console.log("loaded")
+                    };
 
+                    image.src=path+"/?id="+id;
                 }
                 else{
                     alert("not a valid entry");
@@ -111,7 +94,6 @@
             }
 
             function newMap(id){
-
                 el = document.getElementById("empty_template").content.cloneNode(true)
                 el.id = id
                 return el
@@ -128,13 +110,13 @@
 
                 curr_row=table_rows[table_rows.length-1]
 
-                if(curr_row.children.length == 3){
+                if(curr_row.children.length == 3 || /Mobi|Android/i.test(navigator.userAgent)){
                     curr_row=document.createElement("tr")
                     table.appendChild(curr_row)
                 }
                 curr_row.appendChild(newMap(maps[nextMap]))
 
-                if(curr_row.children.length == 3){
+                if(curr_row.children.length == 3 || /Mobi|Android/i.test(navigator.userAgent)){
                     curr_row=document.createElement("tr")
                     table.appendChild(curr_row)
                 }
@@ -153,7 +135,7 @@
 
             function onBodyLoad(){
 
-                xhr.open("GET", path+"/?id=query&num=100", true);
+                xhr.open("GET", path+"/?id=query&num=1000", true);
 
                 xhr.onloadend = function(){
 
@@ -196,26 +178,31 @@
 
         <template id="empty_template">
             <td>
-                <div class="map_td"> <!-- MAP -->
+                <div class="map_td" style="text-align: center"> <!-- MAP -->
+                    <!--
+                        <form>
+                            <select oninput="onSelectUpdate(this)">
+                                <option value="airports_list">Airport</option>
+                                <option value="airlines_list">Airline</option>
+                            </select>
+                        </form>
+                    -->
                     <form>
-                        <select oninput="onSelectUpdate(this)">
-                            <option value="airports_list">Airport</option>
-                            <option value="airlines_list">Airline</option>
-                        </select>
+                        <input style="width: 90%" autocomplete="off" class="my_border options_list" list="airports_list" name="choice">
                     </form>
-                    <form>
-                        <input autocomplete="off" class="options_list" list="airports_list" name="choice">
-                    </form>
-                    <button onclick="updateMap(this)">Update</button>
-                    <h4 class="map_name"></h4>
+                    <button class="my_border" onclick="updateMap(this)">Update</button>
+                    <div class="imgJoinDiv">
+                        <img class="imgJoin1" src="world.png" style="width:90%; height:90%;">
+                        <img class="imgJoin2" src="" style="width:90%; height:90%;">
+                    </div>
                 </div>
             </td>
         </template>
 
         <template id="add_map_template">
-            <td id="add_map"> <!-- id="add_map" -->
+            <td style="text-align: left; border: 0px" id="add_map"> <!-- id="add_map" -->
                 <div> <!-- ADD MAP -->
-                    <button onclick="addMap()">Add map</button>
+                    <button class="my_border add_map_button" onclick="addMap()"><h1>+</h1></button>
                 </div>
             </td>
         </template>
