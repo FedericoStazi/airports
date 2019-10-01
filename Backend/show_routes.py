@@ -16,7 +16,6 @@ import urllib.request
 airport_point = {}
 m = Basemap(projection='robin',lon_0=0,resolution='c')
 fig, ax = plt.subplots()
-fig.set_size_inches(4, 2.5, forward=True)
 data_is_read = False
 
 #-----     -----     data variables     -----     -----#
@@ -33,6 +32,8 @@ airline_codes = {}
 
 def read_data(): #read all data
 
+	#TODO reset varaibles
+
 	global data_is_read
 
 	if data_is_read:
@@ -45,6 +46,8 @@ def read_data(): #read all data
 	if not path:
 		path="."
 
+	print(1)
+
 	if os.path.isfile(path+'/data/routes.dat') == False:
 		print("Downloading routes.dat")
 		urllib.request.urlretrieve('https://raw.githubusercontent.com/jpatokal/openflights/master/data/routes.dat', path+'/data/routes.dat')
@@ -55,6 +58,7 @@ def read_data(): #read all data
 		print("Downloading airlines.dat")
 		urllib.request.urlretrieve('https://raw.githubusercontent.com/jpatokal/openflights/master/data/airlines.dat', path+'/data/airlines.dat')
 
+	print(2)
 
 	# reading csv files
 	# they are converted to list to make the script faster
@@ -97,15 +101,22 @@ def read_data(): #read all data
 
 #-----     -----     draw routes and map     -----     -----#
 
-def prepare_map(a): #draw map and plot title
-	m.drawlsmask(land_color='green', ocean_color='aqua', resolution='c')
-	plt.title(str(a))
+def prepare_map(id): #draw map and plot title
+	print("Preparing map")
+	global m, fig, ax
+	m = Basemap(projection='robin', lon_0=0, resolution='c')
+	fig, ax = plt.subplots()
+	fig.set_size_inches(1.5, 1, forward=True)
+	if id == "0":
+		m.drawlsmask(land_color='green', ocean_color='aqua', resolution='c')
+	#plt.title(str(a))
 
 def show_map():
 	plt.show()
 
-def print_map(code): #currently not used
-	fig.savefig(code+".png", dpi=1600)
+def print_map(code):
+	print("printing map")
+	fig.savefig("files/"+code+".png", dpi=1600, transparent=True)
 
 def html_map():
 	return json.dumps(mpld3.fig_to_dict(fig))
@@ -116,7 +127,7 @@ def point(a, interactive): #draw a point on airport a
 	airport_point[a]=True
 	m.scatter(\
 		airport_location[a][1], airport_location[a][0],\
-		5, marker='o',color='red', latlon='true', zorder=3\
+		0.05, marker='x',color='red', latlon='true', zorder=3\
 	)
 
 def line(a, b, interactive): #draw a line from airport a to airport b
@@ -132,7 +143,10 @@ def line(a, b, interactive): #draw a line from airport a to airport b
 
 def draw_airport_routes(airport, interactive):
 
-	prepare_map(airport_name[airport])
+	prepare_map(airport)
+
+	if airport == "0":
+		return print_map("p"+airport)
 
 	if airport not in airport_routes:
 		print("No route found for airport "+airport_name[airport]+" ("+airport+")")
@@ -148,12 +162,15 @@ def draw_airport_routes(airport, interactive):
 	if interactive:
 		show_map()
 	else:
-		return html_map()
-		#return print_map("p"+airport)
+		return print_map("p"+airport)
+		#return html_map()
 
 def draw_airline_routes(airline, interactive):
 
-	prepare_map(airline_name[airline])
+	prepare_map(airline)
+
+	if airline == "0":
+		return print_map("p"+airline)
 
 	if airline not in airline_routes:
 		print("No route found for airline "+airline_name[airline]+" ("+airline+")")
@@ -169,8 +186,8 @@ def draw_airline_routes(airline, interactive):
 	if interactive:
 		show_map()
 	else:
-		return html_map()
-		#return print_map("p"+airport)
+		return print_map("p"+airport)
+		#return html_map()
 
 #-----    ------     data soritng -----     -----#
 
@@ -205,6 +222,8 @@ def show_routes(code):
 	if code[0] == "i":
 		interactive = True
 		code = code[1:]
+
+	print("Start")
 
 	if code[0] == "p":
 		return draw_airport_routes(code[1:], interactive)
