@@ -24,6 +24,7 @@ This screenshots shows the comparison between the three main London airports:
 ## Local version
 
 The following command can be used to see the map locally on your machine
+
 '''
 python3 script.py
 '''
