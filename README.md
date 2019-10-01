@@ -19,7 +19,10 @@ The website can be used to easily compare maps created with the python scripts.
 
 This is the first version of the website, which will soon be improved.
 
-This screenshots shows the comparison between the three main London airports:
+These screenshots show the comparison between the main London airports:
+
+![Screenshot 1](/Screenshot1.png)
+![Screenshot 2](/Screenshot2.png)
 
 ## Local version
 
