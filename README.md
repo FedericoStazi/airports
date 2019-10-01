@@ -31,3 +31,6 @@ The following command can be used to see the map locally on your machine
 ```
 python3 script.py
 ```
+## Author
+
+* **Federico Stazi** - [FedericoStazi](https://github.com/FedericoStazi)
