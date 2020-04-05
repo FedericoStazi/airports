@@ -7,6 +7,8 @@ The website is hosted on *Google Firebase*
 
 The python Flask server that generates the maps is hosted on *pythonanywhere.com*
 
+*The website is currently under maintainance*
+
 ## Backend
 
 The Flask server runs a python script that returns the image showing the air routes starting from the chosen airport.
